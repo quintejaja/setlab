@@ -61,3 +61,11 @@ Registro de sesiones. Cada sesión agrega una entrada al final.
 - Probado en vivo con "Actual": 421 analizados, 2 no están en Deezer, 7 sin preview, 0 errores. Ningún audio queda en disco. Tarda ~10 min para 430 temas.
 - Pendiente para 2.3: la energía cae casi toda entre 0.45 y 0.85 (promedio 0.66). Para la curva del set conviene usarla relativa a la playlist (percentiles), no absoluta.
 - Bloqueos: ninguno. Falta `LASTFM_API_KEY` y `GETSONGBPM_API_KEY` para probar en vivo 2.1, 2.3 y 3.1.
+
+## 2026-10-26 — Repo público en GitHub (sin tarea)
+- Repo: https://github.com/quintejaja/setlab (público, rama `main`).
+- Antes de publicar: historial revisado sin secretos; autor de los commits reescrito al mail noreply de GitHub (el mail personal no queda expuesto). En este repo `user.email` es el noreply.
+- Protección local: `.githooks/pre-commit` bloquea .env, la DB, tokens, audio y cualquier valor real del .env (activar con `git config core.hooksPath .githooks`). `.env.example` con los nombres de las variables.
+- GitHub: secret scanning + push protection, Dependabot (alertas, fixes y updates semanales de uv y Actions), reporte privado de vulnerabilidades, token de Actions solo lectura, `main` sin force-push ni borrado.
+- CI (`.github/workflows/tests.yml`): pytest en cada push/PR, permisos `contents: read`, acciones fijadas por hash.
+- Código: los nombres de columna en SQL dinámico se validan contra una lista fija; el resto usa parámetros `?`.
