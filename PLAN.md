@@ -20,7 +20,7 @@ Cada tarea tiene un criterio de "terminado". Una tarea = una sesión.
 - [ ] 3.2 Rankear candidatos por parecido con la playlist (BPM, energía, género). ✔ tests con tracks ficticios.
 
 ## Fase 4 — Generador de sets
-- [ ] 4.1 Función de compatibilidad entre dos tracks (score + tipo de transición). ✔ tests de casos Camelot/BPM/half-time.
+- [x] 4.1 Función de compatibilidad entre dos tracks (score + tipo de transición). ✔ tests de casos Camelot/BPM/half-time.
 - [ ] 4.2 Grafo de compatibilidad. ✔ test con 10 tracks ficticios.
 - [ ] 4.3 Beam search con curva de energía objetivo y duración, modos `playlist` y `descubrir`. ✔ `setlab build --playlist X --minutos 60 --modo descubrir`.
 
