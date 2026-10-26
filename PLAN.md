@@ -7,7 +7,7 @@ Cada tarea tiene un criterio de "terminado". Una tarea = una sesión.
 - [x] 0.2 `schema.sql` + módulo db (tracks, playlists, playlist_tracks, features, candidates). ✔ test que crea la DB en memoria.
 
 ## Fase 1 — Spotify (entrada)
-- [ ] 1.1 OAuth PKCE + importar una playlist (mía o pública, por link o id) a la DB. Error claro si es editorial. ✔ `setlab playlist import <link>`.
+- [x] 1.1 OAuth PKCE + importar una playlist (mía o pública, por link o id) a la DB. Error claro si es editorial. ✔ `setlab playlist import <link>`.
 - [ ] 1.2 Buscar un tema en Spotify por ISRC o artista+título (fuzzy con rapidfuzz). ✔ tests con respuestas mockeadas.
 
 ## Fase 2 — Features

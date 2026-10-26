@@ -24,3 +24,11 @@ Registro de sesiones. Cada sesión agrega una entrada al final.
 - Decisiones: un solo catálogo `tracks` para temas de playlists y descubiertos (identificados por spotify_id, con isrc y deezer_id para cruzar fuentes). `features` guarda la fuente de cada dato (bpm_source, key_source, audio_source, genre_source). CHECKs en la DB para Camelot (1A–12B), energía/danceability 0–1, bounce 1–5 y BPM > 0. `api_cache` cumple la regla de no repetir pedidos a APIs. Borrar una playlist borra sus tracks asociados y candidatos (cascade).
 - Bloqueos: ninguno.
 - Archivos: `src/setlab/db/schema.sql`, `src/setlab/db/__init__.py`, `tests/test_db.py`.
+
+## 2026-10-24 — Tarea 1.1: OAuth PKCE + importar playlist
+- `setlab playlist import <link>` acepta link (con ?si= o /intl-xx/), URI o id; se loguea con PKCE (abre el navegador la primera vez) y guarda la playlist y sus temas en la DB. 19 tests nuevos con un cliente falso.
+- Probado en vivo con la playlist "Actual": 432 items, 430 temas únicos (hay 2 repetidos en la playlist), todos con ISRC.
+- Decisiones: los scopes ya incluyen escritura de playlists para la 5.1, así no hay que volver a loguearse. Token cacheado en `.spotify_token` (en .gitignore). Se aceptan las claves "track" e "item" porque Spotify renombró el campo en 2026. Owner "spotify" o 403/404 dan un error claro (editorial o privada). Reimportar reemplaza el orden de la playlist sin duplicar temas. Se agregaron spotipy y python-dotenv.
+- `.env` creado con SPOTIFY_CLIENT_ID y SPOTIFY_REDIRECT_URI; NO se commitea (está en .gitignore).
+- Bloqueos: ninguno.
+- Archivos: `src/setlab/sources/spotify.py`, `src/setlab/db/repo.py`, `src/setlab/cli.py`, `tests/test_spotify.py`, `.gitignore`, `pyproject.toml`.

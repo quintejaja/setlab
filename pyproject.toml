@@ -5,6 +5,8 @@ description = "Generador de sets para DJ a partir de playlists de Spotify y una 
 readme = "AGENTS.md"
 requires-python = ">=3.12,<3.13"
 dependencies = [
+    "python-dotenv>=1.2.4",
+    "spotipy>=2.26.0",
     "typer>=0.12",
 ]
 
