@@ -17,3 +17,10 @@ Registro de sesiones. Cada sesión agrega una entrada al final.
 - Se quitan mutagen y pyrekordbox del stack; se agregan httpx, Last.fm, Deezer y GetSongBPM.
 - Estructura: `ingest/`, `matching.py` y `export/rekordbox.py` reemplazados por `sources/`, `discover.py` y `export/spotify.py`.
 - Para tener en cuenta: GetSongBPM pide un backlink a su sitio para dar API key; Last.fm también pide registrar una API key (gratis).
+
+## 2026-10-23 — Tarea 0.2: Esquema y módulo db
+- `schema.sql` con 6 tablas: tracks, playlists, playlist_tracks, features, candidates, api_cache.
+- `setlab.db.connect()` abre la DB (`:memory:`, ruta, o `SETLAB_DB` / `setlab.db` por defecto), activa foreign keys y crea las tablas. 22 tests nuevos.
+- Decisiones: un solo catálogo `tracks` para temas de playlists y descubiertos (identificados por spotify_id, con isrc y deezer_id para cruzar fuentes). `features` guarda la fuente de cada dato (bpm_source, key_source, audio_source, genre_source). CHECKs en la DB para Camelot (1A–12B), energía/danceability 0–1, bounce 1–5 y BPM > 0. `api_cache` cumple la regla de no repetir pedidos a APIs. Borrar una playlist borra sus tracks asociados y candidatos (cascade).
+- Bloqueos: ninguno.
+- Archivos: `src/setlab/db/schema.sql`, `src/setlab/db/__init__.py`, `tests/test_db.py`.

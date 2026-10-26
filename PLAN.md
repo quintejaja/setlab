@@ -4,7 +4,7 @@ Cada tarea tiene un criterio de "terminado". Una tarea = una sesión.
 
 ## Fase 0 — Esqueleto
 - [x] 0.1 Proyecto uv, estructura de carpetas de AGENTS.md, pytest andando, CLI vacía con typer. ✔ `uv run setlab --help` funciona.
-- [ ] 0.2 `schema.sql` + módulo db (tracks, playlists, playlist_tracks, features, candidates). ✔ test que crea la DB en memoria.
+- [x] 0.2 `schema.sql` + módulo db (tracks, playlists, playlist_tracks, features, candidates). ✔ test que crea la DB en memoria.
 
 ## Fase 1 — Spotify (entrada)
 - [ ] 1.1 OAuth PKCE + importar una playlist (mía o pública, por link o id) a la DB. Error claro si es editorial. ✔ `setlab playlist import <link>`.
