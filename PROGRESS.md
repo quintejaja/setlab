@@ -9,3 +9,11 @@ Registro de sesiones. Cada sesión agrega una entrada al final.
 - Los módulos de AGENTS.md existen como stubs vacíos ("Pendiente: ver PLAN.md").
 - Bloqueos: ninguno.
 - Archivos: `pyproject.toml`, `.python-version`, `uv.lock`, `src/setlab/cli.py`, `src/setlab/__init__.py`, `tests/test_cli.py`.
+
+## 2026-10-23 — Cambio de plan (sin tarea)
+- Se descarta la biblioteca local de audio: el usuario no va a aportar archivos.
+- Nuevo flujo: importar playlist de Spotify (propia o pública) -> features -> descubrir temas parecidos -> setlist -> playlist nueva en Spotify.
+- Decisiones del usuario: usar GetSongBPM y previews de Deezer + essentia según lo que haga falta (reglas en AGENTS.md, sección "Fuentes de features"); la única salida es una playlist en Spotify (se quitan rekordbox XML, M3U y el reporte); se aceptan playlists propias y públicas de otros.
+- Se quitan mutagen y pyrekordbox del stack; se agregan httpx, Last.fm, Deezer y GetSongBPM.
+- Estructura: `ingest/`, `matching.py` y `export/rekordbox.py` reemplazados por `sources/`, `discover.py` y `export/spotify.py`.
+- Para tener en cuenta: GetSongBPM pide un backlink a su sitio para dar API key; Last.fm también pide registrar una API key (gratis).

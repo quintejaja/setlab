@@ -1,31 +1,43 @@
 # Setlab — generador de sets para DJ
 
 ## Qué es
-Herramienta local que toma mis playlists de Spotify, las cruza con mi biblioteca de archivos de audio,
-analiza cada tema (BPM, key, energía, danceability, género) y genera sets ordenados para pinchar
-en rekordbox con una Pioneer DDJ-FLX4. Estilo open format: trap, reggaetón, RKT, tech/house.
+Herramienta local que toma una playlist de Spotify (mía o pública de otro usuario), consigue las
+características de cada tema (BPM, key, energía, danceability, género), descubre temas nuevos parecidos
+y arma una setlist ordenada que se guarda como playlist en mi Spotify.
+Dos modos: **playlist** (ordena solo los temas de la playlist) y **descubrir** (mezcla la playlist con temas nuevos parecidos).
+Estilo open format: trap, reggaetón, RKT, tech/house. Controladora: Pioneer DDJ-FLX4.
 
 ## Stack
 - Python 3.12 + uv · SQLite (archivo local) · pytest
-- spotipy (Spotify Web API, OAuth PKCE) · mutagen (tags) · rapidfuzz (matching)
-- essentia (BPM, key, energía, modelos de género) · librosa como fallback
-- pyrekordbox (leer/escribir XML de rekordbox)
+- spotipy (Spotify Web API, OAuth PKCE) · httpx (Last.fm, Deezer, GetSongBPM) · rapidfuzz (matching por nombre)
+- essentia (BPM, key, energía, danceability sobre previews de 30 s) · librosa como fallback
 - Todo gratis y local. Prohibido agregar servicios pagos o nube.
 
 ## Arquitectura
 ```
 src/setlab/
-  ingest/spotify.py     # lee playlists -> tracks_spotify
-  ingest/library.py     # escanea carpeta de audio + XML de rekordbox -> tracks_local
-  matching.py           # une spotify <-> local (artista+título, fuzzy)
-  analysis/             # features por archivo, cacheadas por hash del archivo
+  db/                   # schema.sql + acceso a SQLite
+  sources/spotify.py    # leer playlists, buscar tracks, crear la playlist final
+  sources/lastfm.py     # temas y artistas similares, tags de género
+  sources/deezer.py     # buscar track (ISRC) + preview de 30 s, artistas relacionados
+  sources/getsongbpm.py # BPM y key por metadata
+  analysis/             # key->Camelot, análisis de previews con essentia, combinación de fuentes
+  discover.py           # candidatos parecidos a una playlist + ranking por features
   setgen/graph.py       # grafo de compatibilidad
   setgen/search.py      # búsqueda del set (beam search + curva de energía)
-  export/rekordbox.py   # playlist XML para rekordbox + M3U
+  export/spotify.py     # guarda la setlist como playlist en Spotify
   cli.py                # punto de entrada (typer)
 ```
 El esquema de la DB (`src/setlab/db/schema.sql`) es el contrato entre módulos.
 Si una tarea necesita cambiarlo, documentar el cambio en PROGRESS.md.
+
+## Fuentes de features (cuál usar para qué)
+- **BPM y key:** primero GetSongBPM (rápido, sin descargar nada). Si no tiene el tema, essentia sobre el preview de Deezer.
+- **Energía y danceability:** essentia sobre el preview de Deezer (GetSongBPM no las tiene).
+- **Género:** tags de Last.fm. El campo `bounce` (1–5) es manual.
+- Si GetSongBPM y essentia discrepan en BPM por half/double time, se guarda el valor más cercano a 100–150 y se registra la fuente.
+- Los previews se bajan a una carpeta temporal y se borran apenas se analizan. Nunca se guarda audio.
+- Todo resultado de una API se cachea en la DB: no volver a pedir lo que ya está.
 
 ## Reglas de dominio
 - Key en notación Camelot (1A–12B). Compatibles: misma key, ±1 número con la misma letra, y cambio A<->B con el mismo número.
@@ -34,17 +46,18 @@ Si una tarea necesita cambiarlo, documentar el cambio en PROGRESS.md.
 - Energía de 0 a 1. Un set sigue una curva objetivo (warmup -> pico -> cierre).
 
 ## Restricciones de Spotify (IMPORTANTE)
+- Solo se usa la API oficial. Prohibido scrapear la web de Spotify o descargar audio de Spotify.
 - NO usar /audio-features, /audio-analysis, /recommendations ni /related-artists: devuelven 403 para apps nuevas.
-- Las preview_url vienen en null. Nunca descargar audio de Spotify ni scrapear su web.
-- Spotify solo aporta metadata de playlists. Todo el análisis de audio se hace sobre archivos locales.
+- Sí se puede: leer playlists propias y públicas de usuarios, buscar tracks, crear y llenar playlists en mi cuenta.
+- Las playlists editoriales de Spotify (creadas por Spotify) no se pueden leer: mostrar un error claro.
 
 ## Comandos
 - `uv sync` · `uv run pytest` · `uv run setlab --help`
 
 ## Convenciones
-- Type hints en todo. Funciones puras en analysis/ y setgen/, fáciles de testear.
-- Los tests de setgen usan tracks ficticios. No hace falta audio real.
-- Credenciales solo en `.env` (está en .gitignore). Nunca commitear audio ni `.env`.
+- Type hints en todo. Funciones puras en analysis/, discover.py y setgen/, fáciles de testear.
+- Los tests nunca llaman a APIs reales: usar respuestas mockeadas y tracks ficticios.
+- Credenciales solo en `.env` (está en .gitignore): `SPOTIFY_CLIENT_ID`, `LASTFM_API_KEY`, `GETSONGBPM_API_KEY`. Nunca commitear audio ni `.env`.
 
 ## Protocolo de sesión
 1. Leer `PLAN.md` y `PROGRESS.md`.
