@@ -12,7 +12,7 @@ Cada tarea tiene un criterio de "terminado". Una tarea = una sesión.
 
 ## Fase 2 — Features
 - [ ] 2.1 Conversión key->Camelot + cliente GetSongBPM (BPM, key). ✔ tests de la conversión y del cliente mockeado.
-- [ ] 2.2 Deezer: encontrar el tema (ISRC), bajar el preview, analizar con essentia (BPM, key, energía, danceability) y borrarlo. Cache en DB. ✔ re-analizar no recalcula.
+- [ ] 2.2 Deezer: encontrar el tema (ISRC), bajar el preview, analizar con librosa (BPM, key, energía, danceability) y borrarlo. Cache en DB. ✔ re-analizar no recalcula.
 - [ ] 2.3 Combinar fuentes según AGENTS.md + género por tags de Last.fm + `bounce` manual. ✔ `setlab analyze --playlist X` y `setlab tag`.
 
 ## Fase 3 — Descubrir temas nuevos
@@ -28,4 +28,4 @@ Cada tarea tiene un criterio de "terminado". Una tarea = una sesión.
 - [ ] 5.1 Guardar la setlist como playlist nueva en mi Spotify. ✔ `setlab build ... ` crea la playlist y muestra el link.
 
 ## Fase 6 — Opcional
-- [ ] 6.1 UI (web local o Avalonia leyendo la misma SQLite).
+- [ ] 6.1 UI web local leyendo la misma SQLite.

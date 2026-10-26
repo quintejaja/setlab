@@ -32,3 +32,8 @@ Registro de sesiones. Cada sesión agrega una entrada al final.
 - `.env` creado con SPOTIFY_CLIENT_ID y SPOTIFY_REDIRECT_URI; NO se commitea (está en .gitignore).
 - Bloqueos: ninguno.
 - Archivos: `src/setlab/sources/spotify.py`, `src/setlab/db/repo.py`, `src/setlab/cli.py`, `tests/test_spotify.py`, `.gitignore`, `pyproject.toml`.
+
+## 2026-10-25 — Decisiones del humano (sin tarea)
+- Análisis de audio con librosa en vez de essentia (essentia no tiene wheels para Windows). Energía y danceability son estimaciones propias.
+- UI: web local. Se hace al final, después de que todo ande por CLI.
+- Se trabaja en tandas de tareas independientes (protocolo actualizado en AGENTS.md). Tanda 1: 1.2, 2.1, 2.2, 4.1.

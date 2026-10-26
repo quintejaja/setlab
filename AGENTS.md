@@ -10,7 +10,8 @@ Estilo open format: trap, reggaetón, RKT, tech/house. Controladora: Pioneer DDJ
 ## Stack
 - Python 3.12 + uv · SQLite (archivo local) · pytest
 - spotipy (Spotify Web API, OAuth PKCE) · httpx (Last.fm, Deezer, GetSongBPM) · rapidfuzz (matching por nombre)
-- essentia (BPM, key, energía, danceability sobre previews de 30 s) · librosa como fallback
+- librosa (BPM, key, energía, danceability sobre previews de 30 s). essentia no tiene wheels para Windows: no usarlo.
+- UI: web local (servidor en 127.0.0.1) leyendo la misma SQLite
 - Todo gratis y local. Prohibido agregar servicios pagos o nube.
 
 ## Arquitectura
@@ -21,7 +22,7 @@ src/setlab/
   sources/lastfm.py     # temas y artistas similares, tags de género
   sources/deezer.py     # buscar track (ISRC) + preview de 30 s, artistas relacionados
   sources/getsongbpm.py # BPM y key por metadata
-  analysis/             # key->Camelot, análisis de previews con essentia, combinación de fuentes
+  analysis/             # key->Camelot, análisis de previews con librosa, combinación de fuentes
   discover.py           # candidatos parecidos a una playlist + ranking por features
   setgen/graph.py       # grafo de compatibilidad
   setgen/search.py      # búsqueda del set (beam search + curva de energía)
@@ -32,10 +33,10 @@ El esquema de la DB (`src/setlab/db/schema.sql`) es el contrato entre módulos.
 Si una tarea necesita cambiarlo, documentar el cambio en PROGRESS.md.
 
 ## Fuentes de features (cuál usar para qué)
-- **BPM y key:** primero GetSongBPM (rápido, sin descargar nada). Si no tiene el tema, essentia sobre el preview de Deezer.
-- **Energía y danceability:** essentia sobre el preview de Deezer (GetSongBPM no las tiene).
+- **BPM y key:** primero GetSongBPM (rápido, sin descargar nada). Si no tiene el tema, librosa sobre el preview de Deezer.
+- **Energía y danceability:** librosa sobre el preview de Deezer (GetSongBPM no las tiene). Son estimaciones propias (ver `analysis/audio.py`), no las de Spotify.
 - **Género:** tags de Last.fm. El campo `bounce` (1–5) es manual.
-- Si GetSongBPM y essentia discrepan en BPM por half/double time, se guarda el valor más cercano a 100–150 y se registra la fuente.
+- Si GetSongBPM y librosa discrepan en BPM por half/double time, se guarda el valor más cercano a 100–150 y se registra la fuente.
 - Los previews se bajan a una carpeta temporal y se borran apenas se analizan. Nunca se guarda audio.
 - Todo resultado de una API se cachea en la DB: no volver a pedir lo que ya está.
 
@@ -61,7 +62,8 @@ Si una tarea necesita cambiarlo, documentar el cambio en PROGRESS.md.
 
 ## Protocolo de sesión
 1. Leer `PLAN.md` y `PROGRESS.md`.
-2. Tomar la PRIMERA tarea sin marcar `[ ]`. Una sola tarea por sesión.
+2. Tomar la PRIMERA tarea sin marcar `[ ]`. Una sola tarea por sesión, salvo que el humano pida
+   una tanda de varias: en ese caso, solo tareas cuyas dependencias ya estén hechas, y un commit por tarea.
 3. Implementarla con tests. No avanzar a otras tareas aunque "quede tiempo".
 4. Correr `uv run pytest`. Si falla y no se puede arreglar, documentarlo como bloqueo.
 5. Marcar `[x]` en PLAN.md, actualizar PROGRESS.md y hacer commit.
