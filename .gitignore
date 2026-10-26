@@ -1,9 +1,25 @@
+# Secretos y credenciales
 .env
-.venv/
-__pycache__/
+.env.*
+!.env.example
+.spotify_token*
+.cache*
+
+# Datos locales (la DB contiene el cache de APIs y tus playlists)
 *.db
+*.db-journal
+*.db-wal
+*.db-shm
+
+# Audio: nunca se commitea
 *.mp3
 *.wav
 *.flac
 *.aiff
-.spotify_token
+*.m4a
+
+# Python / herramientas
+.venv/
+__pycache__/
+.pytest_cache/
+*.log

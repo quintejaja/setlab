@@ -1,0 +1,32 @@
+#!/bin/sh
+# Bloquea commits con archivos sensibles o secretos. Activar con:
+#   git config core.hooksPath .githooks
+fail=0
+staged=$(git diff --cached --name-only --diff-filter=ACMR)
+
+# 1) archivos que nunca deben entrar
+for f in $staged; do
+  case "$f" in
+    .env.example) ;;
+    .env|.env.*|*.db|*.db-*|.spotify_token*|.cache*|*.mp3|*.wav|*.flac|*.aiff|*.m4a)
+      echo "BLOQUEADO: '$f' no se puede commitear (secreto, datos locales o audio)."; fail=1 ;;
+  esac
+done
+
+# 2) los valores reales del .env no pueden aparecer en ningún archivo
+if [ -f .env ]; then
+  values=$(sed -n 's/^[A-Z_]*=\(.\{8,\}\)$/\1/p' .env | grep -v '^http')
+  for v in $values; do
+    if git diff --cached -U0 | grep -F -- "$v" >/dev/null; then
+      echo "BLOQUEADO: un valor de tu .env aparece en los cambios a commitear."; fail=1
+    fi
+  done
+fi
+
+# 3) patrones típicos de tokens
+if git diff --cached -U0 -- . ':!.githooks/*' | grep '^+' | grep -E \
+  '(gh[pousr]_[A-Za-z0-9]{30,}|sk-[A-Za-z0-9_-]{20,}|"(access|refresh)_token"\s*:|-----BEGIN [A-Z ]*PRIVATE KEY-----)' >/dev/null; then
+  echo "BLOQUEADO: parece haber un token o clave privada en los cambios."; fail=1
+fi
+
+[ $fail -eq 0 ] || { echo "Revisá con: git diff --cached"; exit 1; }

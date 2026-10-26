@@ -31,7 +31,13 @@ def pending_track_ids(conn: sqlite3.Connection, track_ids: Iterable[int]) -> lis
     return [t for t in track_ids if t not in done]
 
 
+_COLUMNS = {"deezer_id", "deezer_bpm", "bpm", "camelot", "key_confidence", "energy", "danceability", "error"}
+
+
 def _save(conn: sqlite3.Connection, track_id: int, status: str, **cols: object) -> None:
+    unknown = set(cols) - _COLUMNS
+    if unknown:  # los nombres de columna van en el SQL: solo se aceptan los conocidos
+        raise ValueError(f"Columnas no permitidas: {unknown}")
     names = ["track_id", "status", *cols]
     with conn:
         conn.execute(
