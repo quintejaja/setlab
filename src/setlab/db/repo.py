@@ -49,3 +49,27 @@ def save_playlist(conn: sqlite3.Connection, data: PlaylistData) -> int:
                 (pid, position, tid),
             )
     return pid
+
+
+def find_playlist(conn: sqlite3.Connection, link_or_id: str) -> sqlite3.Row | None:
+    """Busca una playlist importada por link, URI, id de Spotify o nombre exacto."""
+    from setlab.sources.spotify import SpotifyError, parse_playlist_id
+
+    try:
+        sid = parse_playlist_id(link_or_id)
+    except SpotifyError:
+        sid = None
+    return conn.execute(
+        "SELECT * FROM playlists WHERE spotify_id = ? OR name = ? ORDER BY imported_at DESC LIMIT 1",
+        (sid, link_or_id.strip()),
+    ).fetchone()
+
+
+def playlist_track_ids(conn: sqlite3.Connection, playlist_id: int) -> list[int]:
+    """Ids de los temas en orden, sin repetidos."""
+    seen: dict[int, None] = {}
+    for (tid,) in conn.execute(
+        "SELECT track_id FROM playlist_tracks WHERE playlist_id = ? ORDER BY position", (playlist_id,)
+    ):
+        seen.setdefault(tid, None)
+    return list(seen)

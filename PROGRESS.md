@@ -37,3 +37,27 @@ Registro de sesiones. Cada sesión agrega una entrada al final.
 - Análisis de audio con librosa en vez de essentia (essentia no tiene wheels para Windows). Energía y danceability son estimaciones propias.
 - UI: web local. Se hace al final, después de que todo ande por CLI.
 - Se trabaja en tandas de tareas independientes (protocolo actualizado en AGENTS.md). Tanda 1: 1.2, 2.1, 2.2, 4.1.
+
+## 2026-10-25 — Tanda 1: tareas 4.1, 2.1, 1.2 y 2.2
+
+### 4.1 Compatibilidad entre dos temas
+- `setgen/compat.py`: `transition(a, b)` devuelve score 0–1, tipo (mezcla, half_time, echo_out, corte) y relación de key.
+- Decisiones: los scores por tipo no se pisan: mezcla >= 0.5 > echo_out (0.25–0.45) > corte (0.1–0.2). Penalización: key adyacente o relativa -0.1, key desconocida -0.2, BPM lineal hasta -0.2 al 6 %, -0.1 extra por half-time. BPM desconocido = corte (no se puede garantizar la mezcla). La energía no se mira acá: la maneja la curva en 4.3.
+
+### 2.1 Camelot + GetSongBPM
+- `analysis/camelot.py` convierte Am, C#m, E♭ major, A minor, etc. a Camelot (rueda completa testeada). `sources/getsongbpm.py` busca por artista+título con fuzzy y pide el detalle si la búsqueda no trae tempo.
+- `sources/http.py`: cliente HTTP compartido con cache en `api_cache` (la api_key no se guarda en la clave), reintento en 429 y 404 cacheado. `sources/text.py`: normaliza títulos (saca feat., acentos y "Remastered", pero NO remix/edit).
+- La API está en `api.getsong.co` (el dominio viejo está detrás de Cloudflare). Sin probar en vivo: falta `GETSONGBPM_API_KEY`.
+
+### 1.2 Búsqueda en Spotify
+- `search_track()` en `sources/spotify.py`: primero `isrc:`, después `track:"..." artist:"..."` y por último texto libre; elige con rapidfuzz (título 60 % + artista principal 40 %, -10 si la duración difiere más de 15 s). Umbral 82. Cache opcional en `api_cache`.
+- Probado en vivo: Gasolina, Tití Me Preguntó, Systëm (con diéresis), Marea (con feat.), Bzrp Session 52; un tema inexistente devuelve None.
+
+### 2.2 Deezer + librosa
+- `sources/deezer.py` (ISRC y búsqueda), `analysis/audio.py` (BPM con beat_track, key con perfiles Krumhansl sobre chroma CQT, energía y danceability propias) y `analysis/runner.py` (baja el preview a un temporal, analiza y lo borra). Comando `setlab audio --playlist X`.
+- Cambio de esquema: tabla nueva `audio_analysis` (resultado crudo por tema, con status ok/no_preview/not_found/error). Los que dieron error se reintentan; el resto no se recalcula ni se vuelve a consultar Deezer.
+- El preview de Deezer viene firmado y vence a los ~15 min: la consulta del tema no se cachea, se guarda `deezer_id` en tracks.
+- BPM: beat_track solo da valores cuantizados (error mediano 1.3 %). Se refina con una recta sobre los tiempos de los beats (hop 128): error mediano 0.14 % contra el BPM de Deezer (43 temas; 40 dentro del 2 %, 1 fuera del 6 %). Opción `--rehacer` para recalcular todo.
+- Probado en vivo con "Actual": 421 analizados, 2 no están en Deezer, 7 sin preview, 0 errores. Ningún audio queda en disco. Tarda ~10 min para 430 temas.
+- Pendiente para 2.3: la energía cae casi toda entre 0.45 y 0.85 (promedio 0.66). Para la curva del set conviene usarla relativa a la playlist (percentiles), no absoluta.
+- Bloqueos: ninguno. Falta `LASTFM_API_KEY` y `GETSONGBPM_API_KEY` para probar en vivo 2.1, 2.3 y 3.1.

@@ -66,3 +66,20 @@ CREATE TABLE IF NOT EXISTS api_cache (
     fetched_at  TEXT NOT NULL DEFAULT (datetime('now')),
     PRIMARY KEY (source, key)
 );
+
+-- Resultado crudo del análisis de audio del preview de Deezer (tarea 2.2).
+-- 2.3 combina esto con GetSongBPM y Last.fm para llenar `features`.
+-- Si hay fila, no se vuelve a analizar (salvo status 'error').
+CREATE TABLE IF NOT EXISTS audio_analysis (
+    track_id        INTEGER PRIMARY KEY REFERENCES tracks (id) ON DELETE CASCADE,
+    status          TEXT NOT NULL CHECK (status IN ('ok', 'no_preview', 'not_found', 'error')),
+    deezer_id       INTEGER,
+    deezer_bpm      REAL,                -- el BPM que trae Deezer (suele venir en 0 = desconocido)
+    bpm             REAL CHECK (bpm IS NULL OR bpm > 0),
+    camelot         TEXT CHECK (camelot IS NULL OR camelot GLOB '[1-9][AB]' OR camelot GLOB '1[0-2][AB]'),
+    key_confidence  REAL,
+    energy          REAL CHECK (energy IS NULL OR energy BETWEEN 0 AND 1),
+    danceability    REAL CHECK (danceability IS NULL OR danceability BETWEEN 0 AND 1),
+    error           TEXT,
+    analyzed_at     TEXT NOT NULL DEFAULT (datetime('now'))
+);

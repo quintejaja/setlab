@@ -12,7 +12,7 @@ Cada tarea tiene un criterio de "terminado". Una tarea = una sesión.
 
 ## Fase 2 — Features
 - [x] 2.1 Conversión key->Camelot + cliente GetSongBPM (BPM, key). ✔ tests de la conversión y del cliente mockeado.
-- [ ] 2.2 Deezer: encontrar el tema (ISRC), bajar el preview, analizar con librosa (BPM, key, energía, danceability) y borrarlo. Cache en DB. ✔ re-analizar no recalcula.
+- [x] 2.2 Deezer: encontrar el tema (ISRC), bajar el preview, analizar con librosa (BPM, key, energía, danceability) y borrarlo. Cache en DB. ✔ re-analizar no recalcula.
 - [ ] 2.3 Combinar fuentes según AGENTS.md + género por tags de Last.fm + `bounce` manual. ✔ `setlab analyze --playlist X` y `setlab tag`.
 
 ## Fase 3 — Descubrir temas nuevos

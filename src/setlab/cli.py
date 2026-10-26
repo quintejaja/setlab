@@ -45,5 +45,35 @@ def playlist_import(link: str = typer.Argument(help="Link, URI o id de la playli
         typer.echo(f"Se saltearon {data.skipped} items (archivos locales, episodios o temas no disponibles).")
 
 
+@app.command("audio")
+def audio(
+    playlist: str = typer.Option(..., "--playlist", "-p", help="Link, id o nombre de una playlist importada."),
+    rehacer: bool = typer.Option(False, "--rehacer", help="Vuelve a analizar también lo que ya estaba."),
+) -> None:
+    """Analiza el audio (preview de Deezer) de los temas de una playlist. Lo ya analizado no se repite."""
+    from setlab.analysis.runner import analyze_tracks
+    from setlab.db import connect
+    from setlab.db.repo import find_playlist, playlist_track_ids
+    from setlab.sources.deezer import make_deezer
+
+    conn = connect()
+    row = find_playlist(conn, playlist)
+    if row is None:
+        typer.secho("Esa playlist no está importada. Usá primero: setlab playlist import <link>", fg=typer.colors.RED, err=True)
+        raise typer.Exit(1)
+    ids = playlist_track_ids(conn, row["id"])
+
+    def progress(i: int, total: int) -> None:
+        if i % 10 == 0 or i == total:
+            typer.echo(f"  {i}/{total}")
+
+    typer.echo(f"Analizando {row['name']} ({len(ids)} temas)...")
+    stats = analyze_tracks(conn, make_deezer(conn), ids, progress=progress, force=rehacer)
+    typer.echo(
+        f"Listo: {stats.analyzed} analizados, {stats.cached} ya estaban, {stats.not_found} no están en Deezer, "
+        f"{stats.no_preview} sin preview, {stats.errors} con error."
+    )
+
+
 if __name__ == "__main__":
     app()
