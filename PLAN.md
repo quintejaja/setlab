@@ -8,7 +8,7 @@ Cada tarea tiene un criterio de "terminado". Una tarea = una sesión.
 
 ## Fase 1 — Spotify (entrada)
 - [x] 1.1 OAuth PKCE + importar una playlist (mía o pública, por link o id) a la DB. Error claro si es editorial. ✔ `setlab playlist import <link>`.
-- [ ] 1.2 Buscar un tema en Spotify por ISRC o artista+título (fuzzy con rapidfuzz). ✔ tests con respuestas mockeadas.
+- [x] 1.2 Buscar un tema en Spotify por ISRC o artista+título (fuzzy con rapidfuzz). ✔ tests con respuestas mockeadas.
 
 ## Fase 2 — Features
 - [x] 2.1 Conversión key->Camelot + cliente GetSongBPM (BPM, key). ✔ tests de la conversión y del cliente mockeado.

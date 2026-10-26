@@ -41,6 +41,8 @@ class SpotifyClient(Protocol):
 
     def next(self, result: dict[str, Any]) -> dict[str, Any] | None: ...
 
+    def search(self, q: str, limit: int = 10, offset: int = 0, type: str = "track") -> dict[str, Any]: ...
+
 
 @dataclass(frozen=True)
 class TrackData:
@@ -103,7 +105,10 @@ def _pages(sp: SpotifyClient, first: dict[str, Any]) -> Iterator[dict[str, Any]]
 
 def _to_track(item: dict[str, Any]) -> TrackData | None:
     # Spotify renombró "track" a "item" en 2026: aceptamos los dos.
-    track = item.get("item") or item.get("track")
+    return _track_from_api(item.get("item") or item.get("track"))
+
+
+def _track_from_api(track: dict[str, Any] | None) -> TrackData | None:
     if not track or track.get("type", "track") != "track" or track.get("is_local") or not track.get("id"):
         return None
     return TrackData(
@@ -158,3 +163,77 @@ def fetch_playlist(sp: SpotifyClient, playlist_id: str) -> PlaylistData:
         else:
             data.tracks.append(track)
     return data
+
+
+# --- búsqueda de temas (tarea 1.2) ---
+
+MIN_MATCH_SCORE = 82.0
+SEARCH_LIMIT = 10  # máximo que acepta /search para apps en modo desarrollo
+
+
+def match_score(track: TrackData, artist: str, title: str, duration_ms: int | None = None) -> float:
+    """Parecido 0–100 entre un resultado de Spotify y el tema buscado."""
+    from rapidfuzz import fuzz
+
+    from setlab.sources.text import clean_title, strip_accents
+
+    t = fuzz.token_sort_ratio(clean_title(track.title), clean_title(title))
+    wanted = [strip_accents(a).strip().lower() for a in artist.split(",") if a.strip()]
+    found = [strip_accents(a).strip().lower() for a in track.artists.split(",") if a.strip()]
+    # basta con que el artista principal buscado aparezca entre los del resultado
+    a = max((fuzz.ratio(wanted[0], f) for f in found), default=0.0) if wanted else 0.0
+    score = 0.6 * t + 0.4 * a
+    if duration_ms and track.duration_ms and abs(duration_ms - track.duration_ms) > 15_000:
+        score -= 10  # misma canción pero otra versión (extended, sped up...)
+    return round(score, 1)
+
+
+def _search_items(sp: SpotifyClient, q: str, conn: Any = None) -> list[dict[str, Any]]:
+    import json
+
+    key = f"search?q={q}&limit={SEARCH_LIMIT}"
+    if conn is not None:
+        row = conn.execute("SELECT response FROM api_cache WHERE source = 'spotify' AND key = ?", (key,)).fetchone()
+        if row:
+            return list(json.loads(row[0]))
+    items = ((sp.search(q=q, limit=SEARCH_LIMIT, type="track") or {}).get("tracks") or {}).get("items") or []
+    if conn is not None:
+        with conn:
+            conn.execute(
+                "INSERT OR REPLACE INTO api_cache (source, key, response) VALUES ('spotify', ?, ?)",
+                (key, json.dumps(items)),
+            )
+    return items
+
+
+def search_track(
+    sp: SpotifyClient,
+    artist: str,
+    title: str,
+    isrc: str | None = None,
+    duration_ms: int | None = None,
+    conn: Any = None,
+) -> TrackData | None:
+    """Busca un tema: primero por ISRC, después por artista + título. `conn` activa el cache."""
+    from setlab.sources.text import clean_title
+
+    if isrc:
+        for raw in _search_items(sp, f"isrc:{isrc}", conn):
+            found = _track_from_api(raw)
+            if found and match_score(found, artist, title) >= 60:  # el ISRC manda; solo evita errores groseros
+                return found
+
+    main_artist = artist.split(",")[0].strip()
+    queries = [f'track:"{clean_title(title)}" artist:"{main_artist}"', f"{main_artist} {clean_title(title)}"]
+    best: tuple[float, TrackData] | None = None
+    for q in queries:
+        for raw in _search_items(sp, q, conn):
+            found = _track_from_api(raw)
+            if found is None:
+                continue
+            score = match_score(found, artist, title, duration_ms)
+            if best is None or score > best[0]:
+                best = (score, found)
+        if best and best[0] >= MIN_MATCH_SCORE:
+            return best[1]
+    return None
